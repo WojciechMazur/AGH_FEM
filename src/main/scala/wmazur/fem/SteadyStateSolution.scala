@@ -1,29 +1,42 @@
 package wmazur.fem
 
+import java.text.SimpleDateFormat
+import java.util.Date
+
+import breeze.linalg._
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.indexing.NDArrayIndex
 import org.nd4s.Implicits._
-import breeze.linalg._
-import breeze.numerics._
 
-case class SteadyStateSolution(){
+import scala.reflect.io.File
+
+case class SteadyStateSolution() {
   val grid: Grid = new Grid()
   val globalHMatrix: INDArray = Nd4j.zeros(grid.nodes.size, grid.nodes.size)
   val globalCMatrix: INDArray = Nd4j.zeros(grid.nodes.size, grid.nodes.size)
-  val globalPVector: INDArray = Nd4j.zeros(grid.nodes.size)
-  val temperature: INDArray = grid.nodes.map(node => node.temperature).toNDArray
+  val globalPVector: INDArray = Nd4j.zeros(grid.nodes.size,1)
+  val temperature: INDArray = grid.nodes.map(node => node.temperature).asNDArray(grid.nodes.size, 1)
   private var iteration: Int = 0
-  def run(verbose:Boolean=false):Unit={
-    val options = new GlobalOptions()
-    val iterations: Int = options.simulationTime/options.simulationStepTime
+  private val options = new GlobalOptions()
+  options.elementsCount=grid.elements.size
 
-    for(i<-0 until iterations)
+  private val timestamp:String= new SimpleDateFormat("yyyy-MM-dd-HHmmss").format(new Date)
+  private val file: File = reflect.io.Path(s"resources//output//$timestamp.csv").createFile()
+
+  def run(verbose: Boolean = false): Unit = {
+    this.options.toCSV(file)
+    val iterations: Int = options.simulationTime / options.simulationStepTime
+    for (_ <- 0 until iterations) {
+      eraseMatrices()
       iterateSimulation(verbose)
+    }
   }
 
-  private def iterateSimulation(verbose:Boolean=false):Unit = {
-    iteration+=1
+
+
+  private def iterateSimulation(verbose: Boolean = false): Unit = {
+    iteration += 1
     for ((element, elementId) <- grid.elements.zipWithIndex) {
       val elementHMatrix = countElementHMatrix(element, elementId)
       moveToGlobalMatrix(elementHMatrix, element)
@@ -36,8 +49,7 @@ case class SteadyStateSolution(){
       logIteration(s"C matrix at $iteration. iteration", globalCMatrix.toString)
       logIteration(s"P vector at $iteration. iteration", globalPVector.toString)
     }
-
-    globalCMatrix divi Element.globalOptions.simulationStepTime
+    globalCMatrix divi options.simulationStepTime
     globalHMatrix addi globalCMatrix
     globalPVector addi countPPrim()
     temperature assign calcNextTemperature()
@@ -46,10 +58,11 @@ case class SteadyStateSolution(){
       logIteration(s"[C matrix / dt]  at $iteration. iteration", globalCMatrix.toString)
       logIteration(s"[H matrix  + C matrix / dt] at $iteration. iteration", globalHMatrix.toString)
       logIteration(s"[P vector + P'] at $iteration. iteration", globalPVector.toString)
-      logIteration(s"Temperature vector after $iteration. iteration [t=${iteration*Element.globalOptions.simulationStepTime}]",temperature.toString)
+      logIteration(s"Temperature vector after $iteration. iteration [t=${iteration * Element.globalOptions.simulationStepTime}]", temperature.toString)
     }
-      logIteration(s"Temperature visualization after $iteration. iteration [t=${iteration*Element.globalOptions.simulationStepTime}]",
-        temperature.reshape(Element.globalOptions.edgesHorizontal, Element.globalOptions.edgesVertical).toString)
+    file.appendAll(s"$iteration, ${iteration*options.simulationStepTime}, ${temperature.data().asDouble().mkString(",")}\n")
+    logIteration(s"Temperature visualization after $iteration. iteration [t=${iteration * Element.globalOptions.simulationStepTime}]",
+      temperature.reshape(Element.globalOptions.edgesHorizontal, Element.globalOptions.edgesVertical).toString)
   }
 
   private def countElementHMatrix(element: Element, elementId: Int): INDArray = {
@@ -65,7 +78,7 @@ case class SteadyStateSolution(){
       }
     }
 
-    for ((nodes, nodeId) <- element.nodes.zipWithIndex; i <- 0 until 4; j <- 0 until 4) {
+    for ((_, nodeId) <- element.nodes.zipWithIndex; i <- 0 until 4; j <- 0 until 4) {
       val rowX = element.jacobianTransformation.getRow(nodeId).getRow(0)
       val rowY = element.jacobianTransformation.getRow(nodeId).getRow(1)
       val tmpX: Double = rowX.getDouble(i) * rowX.getDouble(j)
@@ -79,9 +92,8 @@ case class SteadyStateSolution(){
       yield localHMatrix.get(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.all())
 
     sepMatrix.foldLeft(Nd4j.zeros(4, 4)) { case (sum: INDArray, mat: INDArray) => sum add mat }
-
-
   }
+
   private def countElementCMatrix(element: Element, elementId: Int): INDArray = {
     val localCMatrix: INDArray = (for (i <- 0 until 4; j <- 0 until 4; k <- 0 until 4) yield
       Element.volumeShapeFunctions.getDouble(i, j) * Element.volumeShapeFunctions.getDouble(i, k) *
@@ -93,6 +105,7 @@ case class SteadyStateSolution(){
 
     sepMatrix.foldLeft(Nd4j.zeros(4, 4)) { case (sum: INDArray, mat: INDArray) => sum add mat }
   }
+
   private def countElementPVector(element: Element, elementId: Int): INDArray = {
     val localPMatrix: INDArray = Nd4j.zeros(8, 4)
     for (i <- 0 until 8; j <- 0 until 4) {
@@ -107,18 +120,25 @@ case class SteadyStateSolution(){
       yield localPMatrix.get(NDArrayIndex.point(i), NDArrayIndex.all())
     sepMatrix.foldLeft(Nd4j.zeros(4)) { case (sum: INDArray, mat: INDArray) => sum add mat }
   }
-  private def countPPrim():INDArray = {
-    (for(i<- grid.nodes.indices) yield
+
+  private def countPPrim(): INDArray = {
+    (for (i <- grid.nodes.indices) yield
       (globalCMatrix.getRow(i) mul temperature).data().asDouble()
-      .foldLeft(0.0) {{case (sum:Double, value: Double)=>sum+value}}
+        .foldLeft(0.0) {
+          {
+            case (sum: Double, value: Double) => sum + value
+          }
+        }
       ).toNDArray
   }
-  private def calcNextTemperature():INDArray = {
-    val data = globalHMatrix.transpose().data().asDouble()
-    val matrix: DenseMatrix[Double] = new DenseMatrix(grid.nodes.size, grid.nodes.size, data)
-    val vector: DenseVector[Double] = new DenseVector[Double](globalPVector.data().asDouble())
-    val  result: DenseVector[Double] = matrix \ vector
-    result.data.asNDArray(1, grid.nodes.size)
+
+  private def calcNextTemperature(): INDArray = {
+   // val result: INDArray = InvertMatrix.invert(globalHMatrix, false) mmul globalPVector
+
+   val matrix: DenseMatrix[Double] = new DenseMatrix(grid.nodes.size, grid.nodes.size, globalHMatrix.data().asDouble())
+   val vector: DenseVector[Double] = new DenseVector[Double](globalPVector.data().asDouble())
+   val result: DenseVector[Double] = (matrix.t * matrix) \ (matrix.t * vector)
+  result.toArray.toNDArray
   }
 
   private def moveToGlobalMatrix(matrix: INDArray, element: Element, globalMatrix: INDArray = globalHMatrix): Unit = {
@@ -129,6 +149,7 @@ case class SteadyStateSolution(){
       globalMatrix.putScalar(Array(row, column), currentValue + matrix.getDouble(i, j))
     }
   }
+
   private def moveToGlobalVector(matrix: INDArray, element: Element, globalVector: INDArray = globalPVector): Unit = {
     for (i <- 0 until 4) {
       val column = element.nodes(i).id
@@ -136,9 +157,17 @@ case class SteadyStateSolution(){
       globalVector.putScalar(column, currentValue + matrix.getDouble(i))
     }
   }
-  private def logIteration(strings: String*): Unit ={
+
+  private def logIteration(strings: String*): Unit = {
     strings.foreach(s => println(s))
     println()
+  }
+
+  private def eraseMatrices(): Unit ={
+    val gSize=grid.nodes.size
+    globalHMatrix assign Nd4j.zeros(gSize, gSize)
+    globalCMatrix assign Nd4j.zeros(gSize, gSize)
+    globalPVector assign Nd4j.zeros(gSize, 1)
   }
 }
 

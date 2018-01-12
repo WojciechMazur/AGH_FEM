@@ -3,6 +3,8 @@ package wmazur.fem
 import java.io.{BufferedReader, FileNotFoundException, FileReader}
 
 import com.google.gson.Gson
+
+import scala.reflect.io.File
 object GlobalOptions{
 
   def loadFromJSON(jsonPath: String = "resources/globalOptions.json"): GlobalOptions = {
@@ -42,5 +44,11 @@ class GlobalOptions(val initialTemperature:Double,val ambientTemperature:Double,
     prev
   }
 
+  def toCSV(file:File):Unit={
+    for(field<-this.getClass.getDeclaredFields){
+      field.setAccessible(true)
+      file.appendAll(s"${field.getName},${field.get(this)}\n")
+    }
+  }
 
 }

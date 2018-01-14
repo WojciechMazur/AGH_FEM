@@ -6,8 +6,8 @@
   "alpha": 300,
   "lengthVertical": 0.5,
   "lengthHorizontal": 0.05,
-  "edgesVertical": 50,
-  "edgesHorizontal":10,
+  "edgesVertical": 5,
+  "edgesHorizontal":5,
   "specificHeat": 700,
   "conductivity": 25,
   "density":7800

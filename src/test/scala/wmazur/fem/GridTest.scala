@@ -1,9 +1,6 @@
 package wmazur.fem
 
 import org.scalatest.FlatSpec
-import org.nd4j.linalg.api.ndarray.INDArray
-import org.nd4s.Implicits._
-import wmazur.numerical.Interpolation2D
 
 class GridTest extends FlatSpec{
 
@@ -19,5 +16,10 @@ class GridTest extends FlatSpec{
       println()
     }
 
+    for(i<- 0 until GlobalOptions.default.edgesVertical) {
+      for (j <- 0 until GlobalOptions.default.edgesHorizontal)
+        print(grid.nodes(i * GlobalOptions.default.edgesVertical + j).status + " ")
+      println()
+    }
   }
 }

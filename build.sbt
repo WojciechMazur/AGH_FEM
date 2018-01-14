@@ -14,5 +14,4 @@ libraryDependencies ++= Seq(
   "org.scalanlp"        %% "breeze"               % "0.13.2",
   "com.typesafe.play"   %% "play-json"            % "2.6.8",
   "org.scalanlp"        %% "breeze-natives"       % "0.13.2"
-
 )

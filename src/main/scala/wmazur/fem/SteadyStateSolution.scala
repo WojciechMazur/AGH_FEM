@@ -11,6 +11,7 @@ import org.nd4s.Implicits._
 import play.api.libs.json._
 
 import scala.io.Source
+import scala.language.postfixOps
 import scala.reflect.io.File
 
 case class SteadyStateSolution() {
@@ -19,22 +20,26 @@ case class SteadyStateSolution() {
   val globalCMatrix: INDArray = Nd4j.zeros(grid.nodes.size, grid.nodes.size)
   val globalPVector: INDArray = Nd4j.zeros(grid.nodes.size,1)
   val temperature: INDArray = grid.nodes.map(node => node.temperature).asNDArray(grid.nodes.size, 1)
+  val options: GlobalOptions = GlobalOptions.default
 
   private var iteration: Int = 0
   private val phaseCriteria: JsValue = Json.parse(Source.fromFile("resources//phaseCriteria.json").getLines.mkString)
-  private val options = GlobalOptions.default
   private val timestamp:String= new SimpleDateFormat("yyyy-MM-dd-HHmmss").format(new Date)
   private val outputFile: File = reflect.io.Path(s"resources//output//$timestamp.csv").createFile()
   private val outputTemperatureFile: File = reflect.io.Path(s"resources//output//$timestamp-temperature.csv").createFile()
   private val outputConfigurationFile:File = reflect.io.Path(s"resources//output//$timestamp-configuration.txt").createFile()
   private val phases:Vector[Phase] = Phase.arrayFromFile("resources/phaseCriteria.json")
 
-  def run(verbose: Boolean = false): Unit = {
+  def run(verbose: Boolean = false, liveGraph:Boolean=false): Unit = {
     outputTemperatureFile.appendAll("Time, Time in phase, Phase, Average, Max, Min, Core2Surface Delta Temp., Temperature Delta\n")
     val asr = options.conductivity / (options.specificHeat * options.density)
     options.simulationStepTime=((options.lengthVertical/options.edgesVertical) * (options.lengthHorizontal/options.edgesHorizontal)/(0.5 * asr)).toInt
     configurationToFile()
 
+    if(liveGraph) {
+      import sys.process._
+      s"python ${new java.io.File(".").getCanonicalPath}/src/main/python/HeatMap.py filename=resources//output//$timestamp width=${options.edgesVertical} height=${options.edgesHorizontal} live=$liveGraph" !
+    }
     def avgTemperature: Double = temperature.sumT / temperature.rows()
     def maxTemperature: Double = Nd4j.max(temperature).getDouble(0)
     def minTemperature: Double = Nd4j.min(temperature).getDouble(0)
@@ -44,11 +49,16 @@ case class SteadyStateSolution() {
       while (!phase.checkConditions(avgTemperature, maxTemperature, minTemperature)){
         val (time: Int, tempDelta: Double) = iterateSimulation(verbose)
         phase.phaseTime+=options.simulationStepTime
-        outputTemperatureFile.appendAll(s"${secondsToTime(time)}, ${secondsToTime(phase.phaseTime)} ${phase.name}, $avgTemperature, $maxTemperature, ${maxTemperature-minTemperature} $minTemperature, $tempDelta\n")
+        outputTemperatureFile.appendAll(s"${secondsToTime(time)},${secondsToTime(phase.phaseTime)},${phase.name},$avgTemperature,$maxTemperature,$minTemperature,${maxTemperature-minTemperature},$tempDelta\n")
         println(s"Phase: ${phase.name}\t Temperatures: Avg: $avgTemperature\tMax: $maxTemperature\tMin: $minTemperature\tCore-surface: ${maxTemperature-minTemperature}\tDeltaT: $tempDelta\n")
       }
     }
+    if(!liveGraph) {
+      import sys.process._
+      s"python ${new java.io.File(".").getCanonicalPath}/src/main/python/HeatMap.py filename=resources//output//$timestamp width=${options.edgesVertical} height=${options.edgesHorizontal} live=$liveGraph" !
+    }
   }
+
 
   private def iterateSimulation(verbose: Boolean = false): (Int, Double) = {
     eraseMatrices()
@@ -80,7 +90,7 @@ case class SteadyStateSolution() {
     outputFile.appendAll(s"$iteration, ${secondsToTime(iteration*options.simulationStepTime)}, ${temperature.data().asDouble().mkString(",")}\n")
     logIteration(s"Temperature visualization after $iteration. iteration [t=${secondsToTime(iteration * options.simulationStepTime)}]",
       temperature.reshape(Element.globalOptions.edgesHorizontal, Element.globalOptions.edgesVertical).toString)
-    (iteration*options.simulationStepTime, Nd4j.mean(temperature).getDouble(0)-oldAvgTemperature)
+    (iteration*options.simulationStepTime, (Nd4j.mean(temperature).getDouble(0)-oldAvgTemperature)/options.simulationStepTime*60)
   }
 
   private def countElementHMatrix(element: Element, elementId: Int): INDArray = {

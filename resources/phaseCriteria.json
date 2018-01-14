@@ -38,7 +38,7 @@
     "name": "Heating until austenization",
     "ambientTemperature": 1030,
     "alpha": 300,
-    "endMinTemperature": 1029,
+    "endMinTemperature": 1030,
     "conditions":[
       "minTemperature >= endMinTemperature"
     ]
@@ -58,7 +58,7 @@
     "alpha": 300,
     "endMinTemperature": 400,
     "conditions":[
-      "(maxTemperature-minTemperature < 100) || minTemperature <= endMinTemperature"
+      "(maxTemperature-minTemperature < 100) || minTemperature <= endMinTemperature || time > 1800"
     ]
   },
   {

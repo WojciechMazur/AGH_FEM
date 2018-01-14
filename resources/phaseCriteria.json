@@ -1,0 +1,81 @@
+[
+  {
+    "name": "PreHeating",
+    "ambientTemperature": 1200,
+    "alpha": 300,
+    "endMaxTemperature": 650,
+    "conditions":[
+      "maxTemperature >= endMaxTemperature"
+    ]
+  },
+  {
+    "name": "Equalizing temperatures",
+    "ambientTemperature": 650,
+    "alpha": 300,
+    "endMaxTemperature": 650,
+    "conditions":[
+      "maxTemperature - minTemperature < 100"
+    ]
+  },
+  {
+    "name": "Heating 2",
+    "ambientTemperature": 1200,
+    "alpha": 300,
+    "endMaxTemperature": 850,
+    "conditions":[
+      "maxTemperature <= endMaxTemperature"
+    ]
+  },
+  {
+    "name": "Equalizing temperatures 2",
+    "ambientTemperature": 850,
+    "alpha": 300,
+    "conditions":[
+      "maxTemperature - minTemperature < 14"
+    ]
+  },
+  {
+    "name": "Heating until austenization",
+    "ambientTemperature": 1030,
+    "alpha": 300,
+    "endMinTemperature": 1029,
+    "conditions":[
+      "minTemperature >= endMinTemperature"
+    ]
+  },
+  {
+    "name": "Hardening until isotermic stop",
+    "ambientTemperature": 50,
+    "alpha": 300,
+    "endMinTemperature": 425,
+    "conditions":[
+      "minTemperature <= endMinTemperature"
+    ]
+  },
+  {
+    "name": "Isotermic stop",
+    "ambientTemperature": 400,
+    "alpha": 300,
+    "endMinTemperature": 400,
+    "conditions":[
+      "(maxTemperature-minTemperature < 100) || minTemperature <= endMinTemperature"
+    ]
+  },
+  {
+    "name": "Hardening until end",
+    "ambientTemperature": 20,
+    "alpha": 300,
+    "endMaxTemperature": 50,
+    "conditions":[
+      "maxTemperature <= endMaxTemperature"
+    ]
+  },
+  {
+    "name": "Tempering",
+    "ambientTemperature": 565,
+    "alpha": 300,
+    "conditions":[
+      "time >= 7200"
+    ]
+  }
+]

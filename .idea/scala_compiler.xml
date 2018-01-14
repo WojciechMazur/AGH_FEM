@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="SBT 1" modules="agh_mes" />
+    <profile name="SBT 1" modules="agh_mes,agh_fem">
+      <option name="postfixOps" value="true" />
+    </profile>
   </component>
 </project>

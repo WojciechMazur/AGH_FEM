@@ -1,6 +1,5 @@
 package wmazur.fem
 
-import com.google.gson.{Gson, GsonBuilder}
 import wmazur.utility.Point2
 
 class Grid(options: GlobalOptions = new GlobalOptions()) {
@@ -25,5 +24,4 @@ class Grid(options: GlobalOptions = new GlobalOptions()) {
       nodes(node.id+options.edgesVertical+1),
       nodes(node.id+1)
     )
-
 }

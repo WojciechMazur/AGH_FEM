@@ -5,7 +5,7 @@ import org.nd4s.Implicits._
 import wmazur.numerical.Interpolation2D
 
 object Element {
-  val globalOptions = new GlobalOptions()
+  val globalOptions: GlobalOptions = GlobalOptions.default
   val eta: Double = 1/Math.sqrt(3)
   val ksi: Double = eta
   lazy val shapeFunctionsArguments = IndexedSeq((-eta, -1.0), (eta, -1.0), (1.0, -eta), (1.0, eta), (eta, 1.0), (-eta, 1.0), (-1.0, eta), (-1.0, -eta))

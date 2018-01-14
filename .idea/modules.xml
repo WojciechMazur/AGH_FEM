@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/agh_fem.iml" filepath="$PROJECT_DIR$/.idea/modules/agh_fem.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/agh_fem-build.iml" filepath="$PROJECT_DIR$/.idea/modules/agh_fem-build.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/agh_mes.iml" filepath="$PROJECT_DIR$/.idea/modules/agh_mes.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/agh_mes-build.iml" filepath="$PROJECT_DIR$/.idea/modules/agh_mes-build.iml" />
     </modules>

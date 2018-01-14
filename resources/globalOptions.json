@@ -1,14 +1,15 @@
 {
-  "initialTemperature":100,
+  "initialTemperature":20,
   "ambientTemperature":1200,
   "simulationTime": 500,
-  "simulationStepTime":50,
+  "simulationStepTime":60,
   "alpha": 300,
-  "lengthVertical": 0.1,
-  "lengthHorizontal": 0.1,
-  "edgesVertical": 4,
-  "edgesHorizontal":4,
+  "lengthVertical": 0.5,
+  "lengthHorizontal": 0.05,
+  "edgesVertical": 50,
+  "edgesHorizontal":10,
   "specificHeat": 700,
   "conductivity": 25,
   "density":7800
 }
+

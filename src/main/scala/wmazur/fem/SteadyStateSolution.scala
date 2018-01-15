@@ -13,6 +13,8 @@ import play.api.libs.json._
 import scala.io.Source
 import scala.language.postfixOps
 import scala.reflect.io.File
+import scala.sys.process
+import scala.sys.process.Process
 
 case class SteadyStateSolution() {
   val grid: Grid = new Grid()
@@ -30,16 +32,17 @@ case class SteadyStateSolution() {
   private val outputConfigurationFile:File = reflect.io.Path(s"resources//output//$timestamp-configuration.txt").createFile()
   private val phases:Vector[Phase] = Phase.arrayFromFile("resources/phaseCriteria.json")
 
+
   def run(verbose: Boolean = false, liveGraph:Boolean=false): Unit = {
     outputTemperatureFile.appendAll("Time, Time in phase, Phase, Average, Max, Min, Core2Surface Delta Temp., Temperature Delta\n")
     val asr = options.conductivity / (options.specificHeat * options.density)
     options.simulationStepTime=((options.lengthVertical/options.edgesVertical) * (options.lengthHorizontal/options.edgesHorizontal)/(0.5 * asr)).toInt
     configurationToFile()
+    val projectPath: String = new java.io.File(".").getCanonicalPath
+    val visualizationProcess: process.ProcessBuilder = Process(s"python $projectPath/src/main/python/HeatMap.py filename=$projectPath/resources/output/$timestamp width=${options.edgesVertical} height=${options.edgesHorizontal} live=$liveGraph")
 
-    if(liveGraph) {
-      import sys.process._
-      s"python ${new java.io.File(".").getCanonicalPath}/src/main/python/HeatMap.py filename=resources//output//$timestamp width=${options.edgesVertical} height=${options.edgesHorizontal} live=$liveGraph" !
-    }
+    if(liveGraph)
+      visualizationProcess.run
     def avgTemperature: Double = temperature.sumT / temperature.rows()
     def maxTemperature: Double = Nd4j.max(temperature).getDouble(0)
     def minTemperature: Double = Nd4j.min(temperature).getDouble(0)
@@ -54,8 +57,7 @@ case class SteadyStateSolution() {
       }
     }
     if(!liveGraph) {
-      import sys.process._
-      s"python ${new java.io.File(".").getCanonicalPath}/src/main/python/HeatMap.py filename=resources//output//$timestamp width=${options.edgesVertical} height=${options.edgesHorizontal} live=$liveGraph" !
+      visualizationProcess.run
     }
   }
 

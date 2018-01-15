@@ -13,5 +13,6 @@ libraryDependencies ++= Seq(
   "com.google.code.gson" % "gson"                 % "2.8.0",
   "org.scalanlp"        %% "breeze"               % "0.13.2",
   "com.typesafe.play"   %% "play-json"            % "2.6.8",
-  "org.scalanlp"        %% "breeze-natives"       % "0.13.2"
+  "org.scalanlp"        %% "breeze-natives"       % "0.13.2",
+  "org.bytedeco"         % "javacpp"              % "1.3.3"
 )

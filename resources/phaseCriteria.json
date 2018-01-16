@@ -36,7 +36,7 @@
   },
   {
     "name": "Heating until austenization",
-    "ambientTemperature": 1030,
+    "ambientTemperature": 1040,
     "alpha": 300,
     "endMinTemperature": 1030,
     "conditions":[
@@ -45,7 +45,7 @@
   },
   {
     "name": "Hardening until isotermic stop",
-    "ambientTemperature": 50,
+    "ambientTemperature": 20,
     "alpha": 300,
     "endMinTemperature": 425,
     "conditions":[

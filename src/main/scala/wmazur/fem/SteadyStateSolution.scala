@@ -30,11 +30,13 @@ case class SteadyStateSolution() {
   private val outputFile: File = reflect.io.Path(s"resources//output//$timestamp.csv").createFile()
   private val outputTemperatureFile: File = reflect.io.Path(s"resources//output//$timestamp-temperature.csv").createFile()
   private val outputConfigurationFile:File = reflect.io.Path(s"resources//output//$timestamp-configuration.txt").createFile()
+  private val phasesSummaryFile:File =  reflect.io.Path(s"resources//output//$timestamp-phasesSummary.csv").createFile()
   private val phases:Vector[Phase] = Phase.arrayFromFile("resources/phaseCriteria.json")
 
 
   def run(verbose: Boolean = false, liveGraph:Boolean=false): Unit = {
     outputTemperatureFile.appendAll("Time, Time in phase, Phase, Average, Max, Min, Core2Surface Delta Temp., Temperature Delta\n")
+    phasesSummaryFile.appendAll(s"Phase Name, Phase time in seconds, Phase time, Ambient temperature, Alpha, End conditions\n")
     val asr = options.conductivity / (options.specificHeat * options.density)
     options.simulationStepTime=((options.lengthVertical/options.edgesVertical) * (options.lengthHorizontal/options.edgesHorizontal)/(0.5 * asr)).toInt
     configurationToFile()
@@ -55,9 +57,13 @@ case class SteadyStateSolution() {
         outputTemperatureFile.appendAll(s"${secondsToTime(time)},${secondsToTime(phase.phaseTime)},${phase.name},$avgTemperature,$maxTemperature,$minTemperature,${maxTemperature-minTemperature},$tempDelta\n")
         println(s"Phase: ${phase.name}\t Temperatures: Avg: $avgTemperature\tMax: $maxTemperature\tMin: $minTemperature\tCore-surface: ${maxTemperature-minTemperature}\tDeltaT: $tempDelta\n")
       }
+      phasesSummaryFile.appendAll(s"${phase.name}, ${phase.phaseTime}, ${secondsToTime(phase.phaseTime)}, ${phase.ambientTemperature}, ${phase.alpha}, ${phase.conditions.mkString("$$")}\n")
     }
+    println("Finished simulation")
     if(!liveGraph) {
       visualizationProcess.run
+    }else{
+      sys.exit(1)
     }
   }
 

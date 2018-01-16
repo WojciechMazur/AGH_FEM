@@ -23,7 +23,7 @@ class TemperaturePhaseData:
 
 
 def main(**kwargs):
-    filenameBase = 'resources/output/2018-01-14-171246'
+    filenameBase = 'resources/output/2018-01-15-215539'
     if 'filename' in kwargs:
         filenameBase = kwargs['filename']
     width = 50
@@ -34,7 +34,7 @@ def main(**kwargs):
         height = int(kwargs['height'])
     live = False
     if 'live' in kwargs:
-        live = bool(kwargs['live'])
+        live = kwargs['live'].lower() in ("yes", "true", "t", "1")
     filename = filenameBase + '.csv'
     temperatureFilename = filenameBase + '-temperature.csv'
 
@@ -106,11 +106,35 @@ def main(**kwargs):
     core2surface.grid(True)
 
     if not live:
-        minTemp.set_yticks([min(minT), max(minT)])
-        maxTemp.set_yticks([round(min(maxT), 2), round(max(maxT), 2)])
-        avgTemp.set_yticks([round(min(avgT), 2), round(max(avgT), 2)])
-        core2surface.set_yticks([round(min(core2surfaceT), 2), round(max(core2surfaceT), 2)])
-        deltaTemp.set_yticks([round(min(deltaT), 2), 0, round(max(deltaT), 2)])
+        xTicks=[]
+        labels=[]
+        j=len(temperatureData)
+        for i in range(0, j, max(math.ceil(0.1*j),2)):
+            xTicks.append(i)
+            labels.append(timeTotal[i])
+        minTemp.set_yticks([min(minT), max(minT)+1])
+        minTemp.set_xticks(xTicks)
+        minTemp.set_xticklabels(labels, rotation=20)
+
+        maxTemp.set_yticks([round(min(maxT), 2), round(max(maxT)+1, 2)])
+        maxTemp.set_xticks([0, j])
+        maxTemp.set_xticks(xTicks)
+        maxTemp.set_xticklabels(labels, rotation=20)
+
+        avgTemp.set_yticks([round(min(avgT), 2), round(max(avgT)+1, 2)])
+        avgTemp.set_xticks([0, j])
+        avgTemp.set_xticks(xTicks)
+        avgTemp.set_xticklabels(labels, rotation=20)
+
+        core2surface.set_yticks([round(min(core2surfaceT), 2), round(max(core2surfaceT)+1,2)])
+        core2surface.set_xticks([0, j])
+        core2surface.set_xticks(xTicks)
+        core2surface.set_xticklabels(labels, rotation=20)
+
+        deltaTemp.set_yticks([round(min(deltaT), 2), 0, round(max(deltaT)+1, 2)])
+        deltaTemp.set_xticks([0, j])
+        deltaTemp.set_xticks(xTicks)
+        deltaTemp.set_xticklabels(labels, rotation=20)
 
     heatDistribution = fig.add_subplot(2, 1, 2)
     heatDistributionImage = plt.imshow(np.zeros((height, width)), cmap=plt.get_cmap('jet'), vmin=0, vmax=1200)
@@ -143,13 +167,15 @@ def main(**kwargs):
 
         return [avgTempLine, minTLine, maxTLine, core2surfaceLine, deltaTLine, heatDistributionImage]
 
-    def liveUpdateFig(j):
+    def liveUpdateFig(j, iter=0):
+        if iter>1000:
+            return null
         tempData, d, xD, avgTe, minTe, maxTe, core2surfaceTe, deltaTe, t = load()
         j=min(int(j), len(tempData))
 
         if len(tempData) == 0 or j >=len(tempData):
             time.sleep(1)
-            return liveUpdateFig(j)
+            return liveUpdateFig(j, iter+1)
 
         fig.suptitle('Current phase: ' + tempData[j].phase + '\nTime: ' +
             tempData[j].timeTotal + '\n TempAvg: ' + str(
@@ -198,11 +224,14 @@ def main(**kwargs):
         # return the artists set
         return [avgTempLine, minTLine, maxTLine, core2surfaceLine, deltaTLine, heatDistributionImage]
 
-
     if not live:
-        ani = animation.FuncAnimation(fig, updatefig, frames=range(len(data)), interval=100, blit=False)
+        plt.rcParams['animation.ffmpeg_path'] = 'C:\\Users\\Wojci\\Documents\\GitHub\\AGH_FEM\\ffmpeg-3.4.1-win64-static\\bin\\ffmpeg.exe'
+        Writer = animation.writers['ffmpeg']
+        writer = Writer(fps=15, metadata=dict(artist='Wojciech Mazur'), bitrate=1800)
+        ani = animation.FuncAnimation(fig, updatefig, frames=range(len(data)), interval=10, blit=False)
+        ani.save(filenameBase+".mp4", writer=writer)
     else:
-        ani = animation.FuncAnimation(fig, liveUpdateFig, interval=1000, blit=False)
+        ani = animation.FuncAnimation(fig, liveUpdateFig, interval=100, blit=False)
     plt.show()
 
 

@@ -3,6 +3,6 @@ package wmazur
 import wmazur.fem.SteadyStateSolution
 
 object Main extends App {
-  SteadyStateSolution().run(liveGraph = true)
+  SteadyStateSolution().run(liveGraph = false)
 
 }

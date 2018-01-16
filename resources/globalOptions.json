@@ -8,8 +8,8 @@
   "lengthHorizontal": 0.15,
   "edgesVertical": 50,
   "edgesHorizontal":15,
-  "specificHeat": 700,
-  "conductivity": 25,
-  "density":7800
+  "specificHeat": 460,
+  "conductivity": 58,
+  "density":7860
 }
 

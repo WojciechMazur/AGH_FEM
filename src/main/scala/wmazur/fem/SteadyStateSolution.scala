@@ -38,7 +38,7 @@ case class SteadyStateSolution() {
     outputTemperatureFile.appendAll("Time, Time in phase, Phase, Average, Max, Min, Core2Surface Delta Temp., Temperature Delta\n")
     phasesSummaryFile.appendAll(s"Phase Name, Phase time in seconds, Phase time, Ambient temperature, Alpha, End conditions\n")
     val asr = options.conductivity / (options.specificHeat * options.density)
-    options.simulationStepTime=((options.lengthVertical/options.edgesVertical) * (options.lengthHorizontal/options.edgesHorizontal)/(0.5 * asr)).toInt
+    options.simulationStepTime=(Math.pow(options.lengthVertical/options.edgesVertical,2)/(0.5 * asr)).toInt
     configurationToFile()
     val projectPath: String = new java.io.File(".").getCanonicalPath
     val visualizationProcess: process.ProcessBuilder = Process(s"python $projectPath/src/main/python/HeatMap.py filename=$projectPath/resources/output/$timestamp width=${options.edgesVertical} height=${options.edgesHorizontal} live=$liveGraph")
